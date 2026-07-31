@@ -3,14 +3,17 @@
 import logging
 import os
 
-from homeassistant.components.panel_iframe import async_register_panel
+from homeassistant.components.frontend import async_register_built_in_panel
+from homeassistant.components.http import StaticPathConfig
 
 _LOGGER = logging.getLogger(__name__)
 
 PANEL_TITLE = "Tuya DPS Builder"
 PANEL_ICON = "mdi:chip"
-PANEL_NAME = "ha_tuya_local_pro_dps_builder"
+PANEL_NAME = "ha-tuya-local-pro-dps-builder"
 PANEL_URL_PATH = "/api/ha_tuya_local_pro/panel"
+PANEL_HTML_URL = f"{PANEL_URL_PATH}/dps_builder.html"
+PANEL_JS_URL = f"{PANEL_URL_PATH}/dps_builder_panel.js"
 
 PANEL_HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -397,6 +400,40 @@ PANEL_HTML = """<!DOCTYPE html>
 </body>
 </html>"""
 
+PANEL_JS = """class TuyaDpsBuilderPanel extends HTMLElement {
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
+  connectedCallback() {
+    this.style.display = "block";
+    this.style.height = "100%";
+    this.style.width = "100%";
+    this._render();
+  }
+
+  _render() {
+    if (!this._iframe) {
+      this.innerHTML = "";
+      this._iframe = document.createElement("iframe");
+      this._iframe.setAttribute("title", "Tuya DPS Builder");
+      this._iframe.style.cssText = "width:100%;height:100%;border:0;display:block;";
+      this.appendChild(this._iframe);
+    }
+
+    const token = this._hass?.auth?.data?.access_token ?? "";
+    const url = new URL("__PANEL_HTML_URL__", window.location.origin);
+    if (token) {
+      url.searchParams.set("token", token);
+    }
+    this._iframe.src = url.toString();
+  }
+}
+
+customElements.define("__PANEL_NAME__", TuyaDpsBuilderPanel);
+""".replace("__PANEL_HTML_URL__", PANEL_HTML_URL).replace("__PANEL_NAME__", PANEL_NAME)
+
 
 async def async_register_dps_builder_panel(hass) -> None:
     """Register the DPS Builder panel as an iframe panel."""
@@ -404,25 +441,36 @@ async def async_register_dps_builder_panel(hass) -> None:
     panel_dir = os.path.join(os.path.dirname(__file__), "www")
     os.makedirs(panel_dir, exist_ok=True)
     panel_file = os.path.join(panel_dir, "dps_builder.html")
+    panel_js_file = os.path.join(panel_dir, "dps_builder_panel.js")
 
     try:
         with open(panel_file, "w", encoding="utf-8") as f:
             f.write(PANEL_HTML)
+        with open(panel_js_file, "w", encoding="utf-8") as f:
+            f.write(PANEL_JS)
     except OSError as e:
         _LOGGER.error("Failed to write panel HTML: %s", e)
         return
 
     # Register static path to serve the panel
-    hass.http.register_static_path(PANEL_URL_PATH, panel_dir)
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(PANEL_URL_PATH, panel_dir, cache_headers=False)]
+    )
 
-    # Register iframe panel
-    async_register_panel(
+    # Register sidebar panel
+    async_register_built_in_panel(
         hass,
+        component_name="custom",
         frontend_url_path=PANEL_NAME,
-        title=PANEL_TITLE,
-        icon=PANEL_ICON,
-        url=PANEL_URL_PATH,
-        config={"embedded": True},
+        sidebar_title=PANEL_TITLE,
+        sidebar_icon=PANEL_ICON,
         require_admin=True,
+        config={
+            "_panel_custom": {
+                "name": PANEL_NAME,
+                "module_url": PANEL_JS_URL,
+                "embed_iframe": False,
+            }
+        },
     )
     _LOGGER.info("Registered Tuya DPS Builder panel at %s", PANEL_URL_PATH)
