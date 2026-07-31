@@ -99,6 +99,7 @@ class CalculatedEnergySensor(RestoreEntity, SensorEntity):
         self._last_sample_value: Optional[float] = None
         self._initialized = False
         self._persist_task = None
+        self._last_persist_time: Optional[datetime] = None
         
         # Storage - use sensor_suffix to avoid key collisions
         self._store: Store = Store(
@@ -159,6 +160,7 @@ class CalculatedEnergySensor(RestoreEntity, SensorEntity):
                 self._last_sample_time = datetime.fromisoformat(stored_data["last_sample_time"])
             if "last_sample_value" in stored_data:
                 self._last_sample_value = stored_data["last_sample_value"]
+            self._last_persist_time = datetime.now()
         
         # Listen for source entity state changes
         self._unsub_state_listener = async_track_state_change_event(
@@ -181,9 +183,9 @@ class CalculatedEnergySensor(RestoreEntity, SensorEntity):
         if self._unsub_state_listener:
             self._unsub_state_listener()
             self._unsub_state_listener = None
-        
+
         # Persist current state
-        await self._persist_state()
+        await self._persist_state_now()
     
     @callback
     def _async_source_state_changed(self, event) -> None:
@@ -258,14 +260,37 @@ class CalculatedEnergySensor(RestoreEntity, SensorEntity):
     
     async def _persist_state(self) -> None:
         """Persist the accumulated energy state to storage."""
+        now = datetime.now()
+        if (
+            self._last_persist_time is not None
+            and (now - self._last_persist_time).total_seconds() < 60
+        ):
+            return
+
         data = {
             "accumulated_kwh": self._accumulated_kwh,
             "last_sample_time": self._last_sample_time.isoformat() if self._last_sample_time else None,
             "last_sample_value": self._last_sample_value,
         }
         await self._store.async_save(data)
+        self._last_persist_time = now
         _LOGGER.debug(
             "Persisted calculated energy: %s kWh for %s",
+            self._accumulated_kwh,
+            self._source_entity_id,
+        )
+
+    async def _persist_state_now(self) -> None:
+        """Persist the accumulated energy state immediately."""
+        data = {
+            "accumulated_kwh": self._accumulated_kwh,
+            "last_sample_time": self._last_sample_time.isoformat() if self._last_sample_time else None,
+            "last_sample_value": self._last_sample_value,
+        }
+        await self._store.async_save(data)
+        self._last_persist_time = datetime.now()
+        _LOGGER.debug(
+            "Persisted calculated energy immediately: %s kWh for %s",
             self._accumulated_kwh,
             self._source_entity_id,
         )
@@ -286,7 +311,7 @@ class CalculatedEnergySensor(RestoreEntity, SensorEntity):
         self._accumulated_kwh = energy
         self._initialized = True
         self.async_write_ha_state()
-        await self._persist_state()
+        await self._persist_state_now()
         _LOGGER.info(
             "Reset calculated energy to %s kWh for %s",
             energy,
