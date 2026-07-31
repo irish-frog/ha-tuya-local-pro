@@ -86,7 +86,7 @@ async def async_setup_entry(
         return
 
     device = device_data["device"]
-    cached = device._get_cached_state()
+    cached = device.get_cached_state()
 
     # Check for custom DPS mappings
     custom_mappings = config_entry.options.get("dps_mappings", [])
@@ -267,7 +267,7 @@ async def async_setup_entry(
                         source_entity_id=source_entity_id,
                         device_unique_id=device.unique_id,
                         device_name=device.name,
-                        name=f"{sensor_name} (Calculated)",
+                        name=sensor_name,
                         precision=3,
                         method="left",  # Left Riemann sum is recommended for HA
                         sensor_suffix=sensor_suffix,

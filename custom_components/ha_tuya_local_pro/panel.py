@@ -323,7 +323,16 @@ PANEL_HTML = """<!DOCTYPE html>
             showNotification(`DPS ${dpsId} added`, 'success');
         }
 
-        function toggleDps(dpsId, val) { showNotification(`Toggle DPS ${dpsId} requires service call`, 'warning'); }
+        function toggleDps(dpsId, val) {
+            if (!currentDeviceId) { showNotification('Select a device first', 'warning'); return; }
+            wsConnection.send(JSON.stringify({
+                id: wsRequestId++,
+                type: 'ha_tuya_local_pro/dps_toggle',
+                device_id: currentDeviceId,
+                dps_id: dpsId,
+            }));
+            showNotification(`Toggling DPS ${dpsId}`, 'success');
+        }
 
         function addMapping() {
             mappings.push({ dps_id: '', name: '', entity_type: 'sensor', scale: 1.0, offset: 0.0, unit: '', device_class: '', state_class: '', icon: '' });

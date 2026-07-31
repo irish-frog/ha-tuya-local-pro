@@ -86,6 +86,7 @@ TUYA_RESPONSE_SUCCESS = "success"
 
 # WebSocket API endpoints
 WS_API_DPS_STREAM = "ha_tuya_local_pro/dps_stream"
+WS_API_DPS_TOGGLE = "ha_tuya_local_pro/dps_toggle"
 WS_API_DPS_MAPPING_SAVE = "ha_tuya_local_pro/dps_mapping_save"
 WS_API_DPS_MAPPING_LOAD = "ha_tuya_local_pro/dps_mapping_load"
 WS_API_PROFILE_EXPORT = "ha_tuya_local_pro/profile_export"

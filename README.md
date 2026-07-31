@@ -11,8 +11,8 @@ This integration communicates **directly with your devices over your local netwo
 - **Local-first communication** — no cloud dependency for control
 - **Manual device setup** — enter device ID, IP, local key, and protocol
 - **Auto-DPS detection** — sensors and switches are auto-detected from device state
-- **Calculated kWh sensors** — reliable energy dashboard-compatible sensors (coming soon)
-- **Profile export/import** — share device configurations as YAML (coming soon)
+- **Calculated kWh sensors** — reliable energy dashboard-compatible sensors
+- **Profile export/import** — share device configurations as JSON
 - **Multiple protocol versions** — supports Tuya protocols 3.1 through 3.5
 - **Auto protocol detection** — tries all protocol versions automatically
 

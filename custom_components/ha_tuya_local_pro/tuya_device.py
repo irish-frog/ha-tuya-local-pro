@@ -219,6 +219,10 @@ class TuyaLocalDevice:
         cached_state = self._get_cached_state()
         return cached_state.get(dps_id)
 
+    def get_cached_state(self):
+        """Get the cached state exposed to entities and diagnostics."""
+        return self._get_cached_state().copy()
+
     async def async_set_property(self, dps_id, value):
         """Set a single DPS property."""
         await self.async_set_properties({dps_id: value})

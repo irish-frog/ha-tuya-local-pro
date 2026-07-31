@@ -15,6 +15,7 @@ from .const import (
     WS_API_DPS_MAPPING_LOAD,
     WS_API_DPS_MAPPING_SAVE,
     WS_API_DPS_STREAM,
+    WS_API_DPS_TOGGLE,
     WS_API_PROFILE_EXPORT,
     WS_API_PROFILE_IMPORT,
 )
@@ -89,6 +90,61 @@ async def handle_dps_stream(
             device.unregister_update_callback(connection._tuya_dps_callbacks.pop(device_id))
 
     connection.subscriptions[msg["id"]] = on_connection_close
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): WS_API_DPS_TOGGLE,
+        vol.Required("device_id"): str,
+        vol.Required("dps_id"): str,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def handle_dps_toggle(
+    hass: HomeAssistant,
+    connection: ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Toggle a boolean-like DPS value on a device."""
+    device_id = msg.get("device_id")
+    dps_id = msg.get("dps_id")
+
+    if not device_id or dps_id is None:
+        connection.send_error(msg["id"], "invalid_request", "device_id and dps_id are required")
+        return
+
+    device_data = hass.data.get(DOMAIN, {}).get(device_id)
+    if not device_data:
+        connection.send_error(msg["id"], "device_not_found", f"Device {device_id} not found")
+        return
+
+    device = device_data.get("device")
+    if not device:
+        connection.send_error(msg["id"], "device_not_found", f"Device object not found for {device_id}")
+        return
+
+    cached_state = device.get_cached_state()
+    current_value = cached_state.get(str(dps_id))
+    if isinstance(current_value, bool):
+        new_value = not current_value
+    elif isinstance(current_value, int) and current_value in (0, 1):
+        new_value = 0 if current_value == 1 else 1
+    else:
+        connection.send_error(
+            msg["id"],
+            "unsupported_dps_value",
+            f"DPS {dps_id} is not toggleable",
+        )
+        return
+
+    try:
+        await device.async_set_property(str(dps_id), new_value)
+    except Exception as err:
+        connection.send_error(msg["id"], "toggle_failed", f"Failed to toggle DPS {dps_id}: {err}")
+        return
+
+    connection.send_result(msg["id"], {"success": True, "dps_id": str(dps_id), "value": new_value})
 
 
 @websocket_api.websocket_command(
@@ -312,6 +368,7 @@ async def handle_profile_import(
 async def async_register_websocket_apis(hass: HomeAssistant) -> None:
     """Register WebSocket APIs."""
     websocket_api.async_register_command(hass, handle_dps_stream)
+    websocket_api.async_register_command(hass, handle_dps_toggle)
     websocket_api.async_register_command(hass, handle_dps_mapping_save)
     websocket_api.async_register_command(hass, handle_dps_mapping_load)
     websocket_api.async_register_command(hass, handle_profile_export)
