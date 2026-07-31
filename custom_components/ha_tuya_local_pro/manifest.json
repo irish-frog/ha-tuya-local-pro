@@ -1,0 +1,19 @@
+{
+    "domain": "ha_tuya_local_pro",
+    "name": "Tuya Local Pro",
+    "codeowners": [],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/user/ha-tuya-local-pro",
+    "integration_type": "device",
+    "iot_class": "local_push",
+    "issue_tracker": "https://github.com/user/ha-tuya-local-pro/issues",
+    "loggers": [
+        "ha_tuya_local_pro",
+        "tinytuya"
+    ],
+    "requirements": [
+        "tinytuya==1.20.0"
+    ],
+    "version": "0.1.0"
+}

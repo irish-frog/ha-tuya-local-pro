@@ -1,0 +1,113 @@
+# Generic Tuya DIN Rail Breaker / Energy Monitor
+# Protocol: 3.5
+# This profile covers most generic DIN rail energy monitors found on Amazon/AliExpress
+
+name: "Generic DIN Rail Breaker"
+manufacturer: "Generic"
+model: "DIN Rail Energy Monitor"
+protocol_version: "3.5"
+
+entities:
+  - entity: switch
+    name: "Switch"
+    icon: "mdi:power"
+    dps:
+      - id: 1
+        name: switch
+        type: boolean
+
+  - entity: sensor
+    name: "Current"
+    class: current
+    icon: "mdi:current-ac"
+    dps:
+      - id: 18
+        type: integer
+        name: sensor
+        unit: "A"
+        class: measurement
+        scale: 0.001
+        precision: 2
+
+  - entity: sensor
+    name: "Power"
+    class: power
+    icon: "mdi:flash"
+    dps:
+      - id: 19
+        type: integer
+        name: sensor
+        unit: "W"
+        class: measurement
+        scale: 0.1
+        precision: 1
+
+  - entity: sensor
+    name: "Voltage"
+    class: voltage
+    icon: "mdi:sine-wave"
+    dps:
+      - id: 20
+        type: integer
+        name: sensor
+        unit: "V"
+        class: measurement
+        scale: 0.1
+        precision: 1
+
+  - entity: sensor
+    name: "Total Energy"
+    class: energy
+    icon: "mdi:lightning-bolt"
+    dps:
+      - id: 1
+        type: integer
+        name: sensor
+        unit: "kWh"
+        class: total_increasing
+        scale: 0.01
+        precision: 2
+        optional: true
+
+  - entity: binary_sensor
+    name: "Fault"
+    class: problem
+    icon: "mdi:alert-circle"
+    dps:
+      - id: 4
+        type: integer
+        name: sensor
+
+  - entity: switch
+    name: "Child Lock"
+    icon: "mdi:lock"
+    category: config
+    dps:
+      - id: 7
+        type: boolean
+        name: switch
+        optional: true
+
+  - entity: switch
+    name: "Overcharge Switch"
+    icon: "mdi:flash-alert"
+    category: config
+    dps:
+      - id: 102
+        type: boolean
+        name: switch
+        optional: true
+
+  - entity: number
+    name: "Countdown"
+    icon: "mdi:timer"
+    category: config
+    dps:
+      - id: 9
+        type: integer
+        name: value
+        unit: "s"
+        range:
+          min: 0
+          max: 86400
+        optional: true

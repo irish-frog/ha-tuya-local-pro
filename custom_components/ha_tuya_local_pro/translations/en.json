@@ -1,0 +1,63 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Tuya Local Pro",
+                "description": "Set up a Tuya device for local control",
+                "data": {
+                    "setup_mode": "Setup mode"
+                }
+            },
+            "local": {
+                "title": "Local Device Setup",
+                "description": "Enter your Tuya device details",
+                "data": {
+                    "device_id": "Device ID",
+                    "host": "Device IP Address",
+                    "local_key": "Local Key",
+                    "protocol_version": "Protocol Version",
+                    "device_cid": "Device CID (for Zigbee sub-devices)"
+                }
+            },
+            "name": {
+                "title": "Device Name",
+                "description": "Give your device a friendly name",
+                "data": {
+                    "name": "Name"
+                }
+            }
+        },
+        "error": {
+            "connection": "Failed to connect to device. Check your credentials and network."
+        },
+        "abort": {
+            "already_configured": "Device is already configured"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Tuya Local Pro Options",
+                "description": "Configure device options and DPS mappings"
+            },
+            "user": {
+                "title": "Device Settings",
+                "description": "Update device connection settings",
+                "data": {
+                    "local_key": "Local Key",
+                    "host": "Device IP Address",
+                    "protocol_version": "Protocol Version"
+                }
+            }
+        },
+        "error": {
+            "connection": "Failed to connect to device. Check your credentials and network."
+        }
+    },
+    "panel": {
+        "dps_builder": {
+            "title": "Tuya DPS Builder",
+            "description": "Configure and map DPS from your Tuya devices"
+        }
+    }
+}
