@@ -6,7 +6,10 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.components.websocket_api import (
     ActiveConnection,
-    websocket_api,
+    async_response,
+    event_message,
+    require_admin,
+    websocket_command,
 )
 from homeassistant.core import HomeAssistant, callback
 
@@ -29,14 +32,14 @@ from .helpers import (
 _LOGGER = logging.getLogger(__name__)
 
 
-@websocket_api.websocket_command(
+@websocket_command(
     {
         vol.Required("type"): WS_API_DPS_STREAM,
         vol.Required("device_id"): str,
     }
 )
-@websocket_api.require_admin
-@websocket_api.async_response
+@require_admin
+@async_response
 async def handle_dps_stream(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -72,7 +75,7 @@ async def handle_dps_stream(
         filtered_poll = {k: v for k, v in poll.items() if k not in ("full_poll", "updated_at")}
         if filtered_poll:
             connection.send_message(
-                websocket_api.event_message(msg["id"], {"dps": filtered_poll, "full_poll": full_poll})
+                event_message(msg["id"], {"dps": filtered_poll, "full_poll": full_poll})
             )
 
     device.register_update_callback(on_dps_update)
@@ -92,15 +95,15 @@ async def handle_dps_stream(
     connection.subscriptions[msg["id"]] = on_connection_close
 
 
-@websocket_api.websocket_command(
+@websocket_command(
     {
         vol.Required("type"): WS_API_DPS_TOGGLE,
         vol.Required("device_id"): str,
         vol.Required("dps_id"): str,
     }
 )
-@websocket_api.require_admin
-@websocket_api.async_response
+@require_admin
+@async_response
 async def handle_dps_toggle(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -147,15 +150,15 @@ async def handle_dps_toggle(
     connection.send_result(msg["id"], {"success": True, "dps_id": str(dps_id), "value": new_value})
 
 
-@websocket_api.websocket_command(
+@websocket_command(
     {
         vol.Required("type"): WS_API_DPS_MAPPING_SAVE,
         vol.Required("device_id"): str,
         vol.Optional("mappings", default=[]): list,
     }
 )
-@websocket_api.require_admin
-@websocket_api.async_response
+@require_admin
+@async_response
 async def handle_dps_mapping_save(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -208,14 +211,14 @@ async def handle_dps_mapping_save(
     _LOGGER.info("Saved %d DPS mappings for device %s", len(validated_mappings), device_id)
 
 
-@websocket_api.websocket_command(
+@websocket_command(
     {
         vol.Required("type"): WS_API_DPS_MAPPING_LOAD,
         vol.Required("device_id"): str,
     }
 )
-@websocket_api.require_admin
-@websocket_api.async_response
+@require_admin
+@async_response
 async def handle_dps_mapping_load(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -244,14 +247,14 @@ async def handle_dps_mapping_load(
     connection.send_result(msg["id"], {"mappings": mappings})
 
 
-@websocket_api.websocket_command(
+@websocket_command(
     {
         vol.Required("type"): WS_API_PROFILE_EXPORT,
         vol.Required("device_id"): str,
     }
 )
-@websocket_api.require_admin
-@websocket_api.async_response
+@require_admin
+@async_response
 async def handle_profile_export(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -302,15 +305,15 @@ async def handle_profile_export(
     _LOGGER.info("Exported profile for device %s with %d entities", device_id, len(dps_mappings))
 
 
-@websocket_api.websocket_command(
+@websocket_command(
     {
         vol.Required("type"): WS_API_PROFILE_IMPORT,
         vol.Required("device_id"): str,
         vol.Required("profile"): dict,
     }
 )
-@websocket_api.require_admin
-@websocket_api.async_response
+@require_admin
+@async_response
 async def handle_profile_import(
     hass: HomeAssistant,
     connection: ActiveConnection,
