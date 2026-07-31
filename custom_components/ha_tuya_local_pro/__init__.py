@@ -13,6 +13,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import DOMAIN, PLATFORMS
 from .helpers import get_device_id
+from .panel import async_register_dps_builder_panel
 from .tuya_device import setup_device, async_delete_device
 from .websocket_api import async_register_websocket_apis
 
@@ -37,6 +38,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the Tuya Local Pro component."""
     # Register WebSocket APIs
     await async_register_websocket_apis(hass)
+    await async_register_dps_builder_panel(hass)
     return True
 
 
@@ -57,10 +59,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         cleanup_failed_device(hass, device_id)
         raise ConfigEntryNotReady("Tuya Local Pro device offline")
 
-    # Set up platforms
-    platforms_to_setup = ["switch", "sensor", "binary_sensor"]
-
-    await hass.config_entries.async_forward_entry_setups(entry, platforms_to_setup)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.add_update_listener(async_update_entry)
 
     return True
@@ -71,12 +70,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     device_id = get_device_id(entry.data)
     _LOGGER.debug("Unloading entry for device: %s", device_id)
 
-    platforms_to_unload = ["switch", "sensor", "binary_sensor"]
     unload_ok = all(
         await asyncio.gather(
             *[
                 hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in platforms_to_unload
+                for platform in PLATFORMS
             ]
         )
     )

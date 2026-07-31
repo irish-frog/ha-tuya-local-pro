@@ -37,9 +37,6 @@ DEFAULT_PROTOCOL_VERSION = "auto"
 # Platform list
 PLATFORMS = [
     "binary_sensor",
-    "button",
-    "number",
-    "select",
     "sensor",
     "switch",
 ]
@@ -55,16 +52,10 @@ DPS_TYPE_JSON = "json"
 ENTITY_TYPE_SENSOR = "sensor"
 ENTITY_TYPE_SWITCH = "switch"
 ENTITY_TYPE_BINARY_SENSOR = "binary_sensor"
-ENTITY_TYPE_NUMBER = "number"
-ENTITY_TYPE_SELECT = "select"
-ENTITY_TYPE_BUTTON = "button"
 ENTITY_TYPES = [
     ENTITY_TYPE_SENSOR,
     ENTITY_TYPE_SWITCH,
     ENTITY_TYPE_BINARY_SENSOR,
-    ENTITY_TYPE_NUMBER,
-    ENTITY_TYPE_SELECT,
-    ENTITY_TYPE_BUTTON,
 ]
 
 # Device classes for sensors

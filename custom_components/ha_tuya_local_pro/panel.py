@@ -229,6 +229,20 @@ PANEL_HTML = """<!DOCTYPE html>
             return new URLSearchParams(window.location.search).get('token') || '';
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+            }[char]));
+        }
+
+        function escapeJsString(value) {
+            return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
         async function loadDevices() {
             try {
                 const token = getAccessToken();
@@ -287,7 +301,11 @@ PANEL_HTML = """<!DOCTYPE html>
             for (const [id, val] of Object.entries(currentDpsValues)) {
                 const t = typeof val;
                 const canToggle = t === 'boolean' || (t === 'number' && (val === 0 || val === 1));
-                html += `<tr><td><strong>DPS ${id}</strong></td><td><span class="dps-value">${val}</span></td><td>${t}</td><td><button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="quickMap('${id}','${t}')">🗺️ Map</button>${canToggle ? ` <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="toggleDps('${id}',${val})">🔄 Toggle</button>` : ''}</td></tr>`;
+                const safeId = escapeHtml(id);
+                const safeType = escapeHtml(t);
+                const safeValue = escapeHtml(val);
+                const jsId = escapeHtml(escapeJsString(id));
+                html += `<tr><td><strong>DPS ${safeId}</strong></td><td><span class="dps-value">${safeValue}</span></td><td>${safeType}</td><td><button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="quickMap('${jsId}','${t}')">🗺️ Map</button>${canToggle ? ` <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="toggleDps('${jsId}',${JSON.stringify(val)})">🔄 Toggle</button>` : ''}</td></tr>`;
             }
             c.innerHTML = html + '</tbody></table>';
         }
@@ -317,7 +335,7 @@ PANEL_HTML = """<!DOCTYPE html>
             if (!mappings.length) { c.innerHTML = '<div class="empty-state"><div class="icon">🗺️</div><p>No mappings configured.</p></div>'; return; }
             let html = '<table class="mapping-table"><thead><tr><th>DPS ID</th><th>Name</th><th>Type</th><th>Scale</th><th>Offset</th><th>Unit</th><th>Device Class</th><th>State Class</th><th></th></tr></thead><tbody>';
             mappings.forEach((m, i) => {
-                html += `<tr><td><input value="${m.dps_id}" onchange="mappings[${i}].dps_id=this.value" placeholder="1"></td><td><input value="${m.name}" onchange="mappings[${i}].name=this.value" placeholder="Power"></td><td><select onchange="mappings[${i}].entity_type=this.value"><option value="sensor"${m.entity_type==='sensor'?' selected':''}>Sensor</option><option value="switch"${m.entity_type==='switch'?' selected':''}>Switch</option><option value="binary_sensor"${m.entity_type==='binary_sensor'?' selected':''}>Binary</option><option value="number"${m.entity_type==='number'?' selected':''}>Number</option></select></td><td><input type="number" value="${m.scale}" step="0.001" onchange="mappings[${i}].scale=parseFloat(this.value)"></td><td><input type="number" value="${m.offset}" step="0.01" onchange="mappings[${i}].offset=parseFloat(this.value)"></td><td><input value="${m.unit||''}" onchange="mappings[${i}].unit=this.value" placeholder="W"></td><td><input value="${m.device_class||''}" onchange="mappings[${i}].device_class=this.value" placeholder="power"></td><td><input value="${m.state_class||''}" onchange="mappings[${i}].state_class=this.value" placeholder="measurement"></td><td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px" onclick="removeMapping(${i})">🗑️</button></td></tr>`;
+                html += `<tr><td><input value="${escapeHtml(m.dps_id)}" onchange="mappings[${i}].dps_id=this.value" placeholder="1"></td><td><input value="${escapeHtml(m.name)}" onchange="mappings[${i}].name=this.value" placeholder="Power"></td><td><select onchange="mappings[${i}].entity_type=this.value"><option value="sensor"${m.entity_type==='sensor'?' selected':''}>Sensor</option><option value="switch"${m.entity_type==='switch'?' selected':''}>Switch</option><option value="binary_sensor"${m.entity_type==='binary_sensor'?' selected':''}>Binary</option></select></td><td><input type="number" value="${escapeHtml(m.scale)}" step="0.001" onchange="mappings[${i}].scale=parseFloat(this.value)"></td><td><input type="number" value="${escapeHtml(m.offset)}" step="0.01" onchange="mappings[${i}].offset=parseFloat(this.value)"></td><td><input value="${escapeHtml(m.unit)}" onchange="mappings[${i}].unit=this.value" placeholder="W"></td><td><input value="${escapeHtml(m.device_class)}" onchange="mappings[${i}].device_class=this.value" placeholder="power"></td><td><input value="${escapeHtml(m.state_class)}" onchange="mappings[${i}].state_class=this.value" placeholder="measurement"></td><td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px" onclick="removeMapping(${i})">🗑️</button></td></tr>`;
             });
             c.innerHTML = html + '</tbody></table>';
         }
@@ -392,6 +410,9 @@ async def async_register_dps_builder_panel(hass) -> None:
     async_register_panel(
         hass,
         frontend_url_path=PANEL_NAME,
+        title=PANEL_TITLE,
+        icon=PANEL_ICON,
+        url=PANEL_URL_PATH,
         config={"embedded": True},
         require_admin=True,
     )

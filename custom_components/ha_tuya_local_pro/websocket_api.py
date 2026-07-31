@@ -3,9 +3,9 @@
 import logging
 from typing import Any
 
+import voluptuous as vol
 from homeassistant.components.websocket_api import (
     ActiveConnection,
-    async_require_admin,
     websocket_api,
 )
 from homeassistant.core import HomeAssistant, callback
@@ -28,8 +28,14 @@ from .helpers import (
 _LOGGER = logging.getLogger(__name__)
 
 
-@websocket_api.async_command
-@async_require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): WS_API_DPS_STREAM,
+        vol.Required("device_id"): str,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
 async def handle_dps_stream(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -85,8 +91,15 @@ async def handle_dps_stream(
     connection.subscriptions[msg["id"]] = on_connection_close
 
 
-@websocket_api.async_command
-@async_require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): WS_API_DPS_MAPPING_SAVE,
+        vol.Required("device_id"): str,
+        vol.Optional("mappings", default=[]): list,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
 async def handle_dps_mapping_save(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -139,8 +152,14 @@ async def handle_dps_mapping_save(
     _LOGGER.info("Saved %d DPS mappings for device %s", len(validated_mappings), device_id)
 
 
-@websocket_api.async_command
-@async_require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): WS_API_DPS_MAPPING_LOAD,
+        vol.Required("device_id"): str,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
 async def handle_dps_mapping_load(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -169,8 +188,14 @@ async def handle_dps_mapping_load(
     connection.send_result(msg["id"], {"mappings": mappings})
 
 
-@websocket_api.async_command
-@async_require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): WS_API_PROFILE_EXPORT,
+        vol.Required("device_id"): str,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
 async def handle_profile_export(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -221,8 +246,15 @@ async def handle_profile_export(
     _LOGGER.info("Exported profile for device %s with %d entities", device_id, len(dps_mappings))
 
 
-@websocket_api.async_command
-@async_require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): WS_API_PROFILE_IMPORT,
+        vol.Required("device_id"): str,
+        vol.Required("profile"): dict,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
 async def handle_profile_import(
     hass: HomeAssistant,
     connection: ActiveConnection,
@@ -279,24 +311,9 @@ async def handle_profile_import(
 
 async def async_register_websocket_apis(hass: HomeAssistant) -> None:
     """Register WebSocket APIs."""
-    hass.components.websocket_api.async_register(
-        WS_API_DPS_STREAM,
-        handle_dps_stream,
-    )
-    hass.components.websocket_api.async_register(
-        WS_API_DPS_MAPPING_SAVE,
-        handle_dps_mapping_save,
-    )
-    hass.components.websocket_api.async_register(
-        WS_API_DPS_MAPPING_LOAD,
-        handle_dps_mapping_load,
-    )
-    hass.components.websocket_api.async_register(
-        WS_API_PROFILE_EXPORT,
-        handle_profile_export,
-    )
-    hass.components.websocket_api.async_register(
-        WS_API_PROFILE_IMPORT,
-        handle_profile_import,
-    )
+    websocket_api.async_register_command(hass, handle_dps_stream)
+    websocket_api.async_register_command(hass, handle_dps_mapping_save)
+    websocket_api.async_register_command(hass, handle_dps_mapping_load)
+    websocket_api.async_register_command(hass, handle_profile_export)
+    websocket_api.async_register_command(hass, handle_profile_import)
     _LOGGER.debug("Registered Tuya Local Pro WebSocket APIs")
