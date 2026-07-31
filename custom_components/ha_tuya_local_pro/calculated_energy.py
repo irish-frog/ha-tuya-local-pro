@@ -98,6 +98,7 @@ class CalculatedEnergySensor(RestoreEntity, SensorEntity):
         self._last_sample_time: Optional[datetime] = None
         self._last_sample_value: Optional[float] = None
         self._initialized = False
+        self._persist_task = None
         
         # Storage - use sensor_suffix to avoid key collisions
         self._store: Store = Store(
@@ -170,6 +171,7 @@ class CalculatedEnergySensor(RestoreEntity, SensorEntity):
         source_state = self._hass.states.get(self._source_entity_id)
         if source_state and source_state.state not in ("unavailable", "unknown"):
             self._process_power_value(source_state)
+            self._schedule_persist_state()
     
     async def async_will_remove_from_hass(self) -> None:
         """Handle entity removal from hass."""
@@ -192,9 +194,10 @@ class CalculatedEnergySensor(RestoreEntity, SensorEntity):
         
         if new_state.state in ("unavailable", "unknown"):
             return
-        
+
         self._process_power_value(new_state)
         self.async_write_ha_state()
+        self._schedule_persist_state()
     
     def _process_power_value(self, state: State) -> None:
         """Process a power value and calculate energy using Riemann sum.
@@ -266,6 +269,13 @@ class CalculatedEnergySensor(RestoreEntity, SensorEntity):
             self._accumulated_kwh,
             self._source_entity_id,
         )
+
+    def _schedule_persist_state(self) -> None:
+        """Persist state after the current update cycle."""
+        if self._persist_task and not self._persist_task.done():
+            return
+
+        self._persist_task = self._hass.async_create_task(self._persist_state())
     
     async def async_reset(self, energy: float = 0.0) -> None:
         """Reset the accumulated energy value.
