@@ -4,10 +4,10 @@
     "codeowners": [],
     "config_flow": true,
     "dependencies": [],
-    "documentation": "https://github.com/user/ha-tuya-local-pro",
+    "documentation": "https://github.com/irish-frog/ha-tuya-local-pro",
     "integration_type": "device",
     "iot_class": "local_push",
-    "issue_tracker": "https://github.com/user/ha-tuya-local-pro/issues",
+    "issue_tracker": "https://github.com/irish-frog/ha-tuya-local-pro/issues",
     "loggers": [
         "ha_tuya_local_pro",
         "tinytuya"
