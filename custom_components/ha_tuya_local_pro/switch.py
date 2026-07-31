@@ -59,7 +59,7 @@ async def async_setup_entry(
         return
 
     device = device_data["device"]
-    cached = device._get_cached_state()
+    cached = device.get_cached_state()
 
     # Check for custom DPS mappings
     custom_mappings = config_entry.options.get(CONF_DPS_MAPPINGS, [])

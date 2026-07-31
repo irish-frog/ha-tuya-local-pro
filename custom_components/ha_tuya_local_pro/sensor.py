@@ -267,7 +267,7 @@ async def async_setup_entry(
                         source_entity_id=source_entity_id,
                         device_unique_id=device.unique_id,
                         device_name=device.name,
-                        name=sensor_name,
+                        name=f"{sensor_name} (Calculated)",
                         precision=3,
                         method="left",  # Left Riemann sum is recommended for HA
                         sensor_suffix=sensor_suffix,

@@ -59,7 +59,7 @@ async def handle_dps_stream(
         return
 
     # Send initial state
-    cached_state = device._get_cached_state()
+    cached_state = device.get_cached_state()
     # Filter out internal keys
     dps_data = {k: v for k, v in cached_state.items() if k not in ("updated_at",)}
     connection.send_result(msg["id"], {"dps": dps_data})
